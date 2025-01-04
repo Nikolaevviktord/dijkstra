@@ -72,27 +72,30 @@ def get_weights():
     return weights
 
 
-def parse_vertex(vertex: str):
+def parse_vertex(vertex):
     col_map = {"а": 0, "б": 1, "в": 2, "г": 3, "д": 4, "е": 5, "ж": 6}
     x = col_map[vertex[0]]
     y = int(vertex[1]) - 1
     return (x, y)
 
 
-def vertex_to_str(x: int, y: int):
+def vertex_to_str(x, y):
     col_map = {0: "а", 1: "б", 2: "в", 3: "г", 4: "д", 5: "е", 6: "ж"}
     return f"{col_map[x]}{y + 1}"
 
 
-def way(weight: list[int], finish: str) -> list[str]:
+def way(weight, finish):
     ROWS, COLS = 5, 7
 
     def get_weight(x1, y1, x2, y2):
         if x1 == x2:
             index = min(y1, y2) + x1 * ROWS
         else:
-            index = ROWS * COLS + y1 + min(x1, x2) * (ROWS - 1)
-        return weight[index]
+            index = y1 + min(x1, x2) * (ROWS - 1)
+        try:
+            return weight[index]
+        except Exception as E:
+            print(index, E)
 
     start = parse_vertex("а3")
     goal = parse_vertex(finish)
@@ -128,7 +131,7 @@ def way(weight: list[int], finish: str) -> list[str]:
     return path[::-1]
 
 
-def code(way: list[str]) -> str:
+def code(way):
     result = "{"
 
     curr_dir = 0
@@ -170,7 +173,7 @@ def code(way: list[str]) -> str:
                 result += "2, "
 
             curr_dir = 2
-            result += "0"
+            result += "0, "
 
         elif curr_vertex[1] - prev_vertex[1] == 1:
             if curr_dir == 0:
@@ -204,25 +207,45 @@ def code(way: list[str]) -> str:
             curr_dir = 3
             result += "0, "
 
-    return result[:-2] + "}"
+    return result[:-2] + ("}" if len(result) > 1 else "{}")
 
 
-def get_code_to_vertex(weight: list[int], finish: str) -> str:
+def get_code_to_vertex(weight, finish):
     return code(way(weight, finish))
 
 
-# пример работы
-#weight = [random.randint(1, 20) for _ in range(58)]
-#finish = 'г1'
-#right_way = way(weight, finish)
-#print(*right_way)
-#print(code(right_way))
+rows = "12345"
+columns = "абвгдеж"
 
-# пример работы с функцией get_code_to_vertex
 weight = get_weights()
-finish = 'г5'
-print(get_code_to_vertex(weight, finish))
 
+print("byte path[60];")
+print("byte len;")
+print("byte x, y;")
+print()
+print("void get_path() {")
+
+for i in range(7):
+    for j in range(5):
+        code_now = get_code_to_vertex(weight, columns[i] + rows[j])
+        way_now = way(weight, columns[i] + rows[j])
+        
+#         print(f"if (x == {i} && y == {j}) path = {code_now};  // {', '.join(way_now)}")
+
+        if not (i == j == 0):
+            print("  else", end=' ')
+        else:
+            print("  ", end='')
+            
+        print(f"if (x == {i} && y == {j}) " + "{")
+        print(f"    path = {code_now};")
+        print(f"    len = {len(code_now) // 3};")
+        print("  }")
+
+        if not (i == 6 and j == 4):
+            print()
+print("}")
+        
 # синтаксис команд для робота
 #   0 - вперёд до перекрёстка
 #   1 - поворот направо
